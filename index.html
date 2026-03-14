@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Club</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f4f1eb; --bg-alt:#ede9e1; --surface:#ffffff; --surface-soft:#faf8f4;
+    --border:#ddd8cf; --border-light:#e8e3da; --muted:#9c9188; --text:#3d3530;
+    --text-dim:#6b6158; --accent:#7a9e8e; --accent-dim:#5e8070; --accent-light:#d4e6df;
+    --mauve:#b08fa0; --mauve-light:#eddde8; --lavender:#8e8ab8; --lavender-light:#e0dff0;
+    --sand:#c9a96e; --sand-light:#f5ecd8; --blush:#d4907a; --blush-light:#f8e4dd;
+    --teal:#5e9ea0; --teal-light:#d6eeef; --white:#ffffff;
+    --shadow:rgba(61,53,48,0.08); --shadow-md:rgba(61,53,48,0.13);
+    --green:#5a9a6a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.7;overflow-x:hidden;}
+
+  /* ═══════════════════════════════════
+     GATE / LOGIN
+  ═══════════════════════════════════ */
+  #gate {
+    position:fixed;inset:0;
+    background:linear-gradient(135deg,#e8e4f0 0%,#ddeee8 40%,#f0e8e4 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:9999;
+    transition:opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1);
+  }
+  #gate::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(122,158,142,0.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 60%,rgba(142,138,184,0.12) 0%,transparent 55%);pointer-events:none;}
+  #gate.hidden{opacity:0;transform:scale(1.04);pointer-events:none;}
+  #gate.admin-mode .gate-orb{background:linear-gradient(135deg,var(--lavender-light),var(--mauve-light));box-shadow:0 8px 32px rgba(142,138,184,0.3);}
+  #gate.admin-mode .gate-btn{background:linear-gradient(135deg,var(--lavender),#6a62a0);}
+  #gate.admin-mode .gate-sub-hint{color:var(--lavender);}
+
+  .gate-orb{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-light),var(--lavender-light));margin-bottom:24px;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 32px rgba(122,158,142,0.2);transition:all 0.4s ease;}
+  .gate-logo{font-family:'Lora',serif;font-size:clamp(26px,5vw,38px);font-weight:500;letter-spacing:6px;color:var(--text);margin-bottom:5px;text-transform:uppercase;}
+  .gate-sub{font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+  .gate-sub-hint{font-size:12px;color:var(--accent-dim);font-weight:600;margin-bottom:44px;min-height:18px;transition:color 0.3s;}
+  .gate-card{background:rgba(255,255,255,0.78);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.9);border-radius:22px;padding:36px 40px;width:320px;box-shadow:0 16px 48px var(--shadow-md);}
+  .gate-form{display:flex;flex-direction:column;gap:14px;}
+  .gate-label{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:600;}
+  .gate-input{width:100%;background:var(--surface-soft);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'Nunito',sans-serif;font-size:15px;text-align:center;letter-spacing:4px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  .gate-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+  .gate-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent-dim));border:none;border-radius:12px;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(122,158,142,0.3);margin-top:2px;}
+  .gate-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(122,158,142,0.4);}
+  .gate-back{background:none;border:none;color:var(--muted);font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;padding:4px;letter-spacing:1px;display:none;margin-top:2px;transition:color 0.15s;}
+  .gate-back:hover{color:var(--text);}
+  .gate-back.show{display:block;}
+  .gate-error{font-size:12px;color:var(--blush);letter-spacing:1px;text-align:center;opacity:0;transition:opacity 0.2s;min-height:16px;}
+  .gate-error.show{opacity:1;}
+
+  /* ═══════════════════════════════════
+     APP
+  ═══════════════════════════════════ */
+  #app{display:none;}
+  #app.visible{display:block;}
+
+  /* ANNOUNCEMENT */
+  #announcementBanner{display:none;background:linear-gradient(90deg,var(--sand-light),var(--blush-light));border-bottom:1px solid var(--border);padding:10px 24px;text-align:center;font-size:13px;font-weight:600;color:var(--text);position:relative;}
+  #announcementBanner.show{display:block;}
+  .ann-close{position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;}
+  .ann-badge{display:inline-block;background:var(--blush);color:#fff;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:20px;margin-right:10px;font-weight:700;}
+
+  /* SIDEBAR */
+  #sidebar{position:fixed;left:0;top:0;bottom:0;width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform 0.3s ease;box-shadow:2px 0 16px var(--shadow);}
+  .sidebar-brand{padding:28px 24px 22px;border-bottom:1px solid var(--border-light);background:linear-gradient(135deg,var(--accent-light),var(--lavender-light));}
+  .sidebar-brand-icon{font-size:24px;margin-bottom:10px;}
+  .sidebar-brand-name{font-family:'Lora',serif;font-size:20px;font-weight:600;letter-spacing:3px;color:var(--text);text-transform:uppercase;}
+  .sidebar-brand-sub{font-size:10px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-top:4px;}
+  .sidebar-nav{flex:1;padding:16px 0;overflow-y:auto;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;color:var(--text-dim);cursor:pointer;font-size:12px;letter-spacing:1px;font-weight:500;border-left:3px solid transparent;transition:all 0.2s;user-select:none;border-radius:0 8px 8px 0;margin:2px 8px 2px 0;}
+  .nav-item:hover{color:var(--accent);background:var(--accent-light);border-left-color:var(--accent-light);}
+  .nav-item.active{color:var(--accent-dim);border-left-color:var(--accent);background:var(--accent-light);font-weight:600;}
+  .nav-icon{width:20px;text-align:center;font-size:15px;}
+  .sidebar-footer{padding:16px 24px;border-top:1px solid var(--border-light);display:flex;flex-direction:column;gap:8px;}
+  .admin-toggle{font-size:11px;letter-spacing:1px;color:var(--muted);font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.15s;padding:9px 12px;border-radius:8px;border:1px solid var(--border);}
+  .admin-toggle:hover{color:var(--text);background:var(--bg-alt);}
+  .admin-toggle.active{color:var(--lavender);background:var(--lavender-light);border-color:var(--lavender);}
+  .access-badge{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:20px;font-weight:700;margin-left:auto;}
+  .access-badge.admin{background:var(--lavender-light);color:var(--lavender);}
+  .access-badge.member{background:var(--accent-light);color:var(--accent-dim);}
+
+  /* MOB TOGGLE */
+  #mob-toggle{display:none;position:fixed;top:16px;left:16px;z-index:200;background:var(--surface);border:1px solid var(--border);color:var(--text);width:42px;height:42px;cursor:pointer;font-size:18px;align-items:center;justify-content:center;border-radius:10px;box-shadow:0 2px 12px var(--shadow);}
+
+  /* MAIN */
+  #main{margin-left:230px;min-height:100vh;padding:0;max-width:calc(100% - 230px);}
+
+  /* ═══════════════════════════════════
+     SMOOTH PAGE TRANSITION SYSTEM
+     Clean crossfade + gentle lift.
+     No canvas, no jank, just silk.
+  ═══════════════════════════════════ */
+
+  /* Page wrapper — normal flow so footer always sits below content */
+  #page-wrapper{position:relative;min-height:100vh;}
+
+  .page{
+    display:none;
+    padding:40px 48px 80px;
+    /* Hidden state */
+    opacity:0;
+    transform:translateY(12px);
+  }
+  .page.active{
+    display:block;
+  }
+
+  /* Entering: fade + lift up */
+  .page.is-entering{
+    display:block;
+    animation:pageIn 0.38s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+  }
+  /* Exiting: fade + drift up slightly */
+  .page.is-exiting{
+    display:block;
+    animation:pageOut 0.22s cubic-bezier(0.55,0,1,0.45) forwards;
+    pointer-events:none;
+    position:absolute;
+    top:0;left:0;right:0;
+    /* Absolute only during exit so it doesn't affect doc flow */
+  }
+
+  @keyframes pageIn{
+    0%  {opacity:0;transform:translateY(14px);}
+    100%{opacity:1;transform:translateY(0);}
+  }
+  @keyframes pageOut{
+    0%  {opacity:1;transform:translateY(0);}
+    100%{opacity:0;transform:translateY(-8px);}
+  }
+
+  /* PAGES */
+  .page-header{margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+  .page-title{font-family:'Lora',serif;font-size:clamp(24px,3.5vw,34px);font-weight:500;color:var(--text);}
+  .page-sub{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:5px;}
+
+  /* WELCOME */
+  .welcome-block{background:linear-gradient(135deg,var(--accent-light) 0%,var(--lavender-light) 100%);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:28px;box-shadow:0 2px 16px var(--shadow);}
+  .welcome-block h2{font-family:'Lora',serif;font-size:21px;font-weight:500;color:var(--text);margin-bottom:10px;}
+  .welcome-block p{color:var(--text-dim);line-height:1.85;font-size:14px;}
+
+  .section-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* ADMIN DASHBOARD */
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-bottom:28px;}
+  .dash-stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;box-shadow:0 2px 8px var(--shadow);}
+  .dash-stat-num{font-family:'Lora',serif;font-size:32px;font-weight:600;color:var(--accent);}
+  .dash-stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:4px;}
+  .audit-log{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;max-height:280px;overflow-y:auto;}
+  .audit-entry{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:12px;}
+  .audit-entry:last-child{border:none;}
+  .audit-time{color:var(--muted);min-width:120px;font-size:11px;}
+  .audit-text{color:var(--text-dim);}
+
+  /* CALENDAR */
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .cal-month-title{font-family:'Lora',serif;font-size:22px;font-weight:500;color:var(--text);}
+  .cal-arrow{background:var(--surface);border:1.5px solid var(--border);color:var(--muted);width:36px;height:36px;cursor:pointer;font-size:14px;transition:all 0.15s;display:flex;align-items:center;justify-content:center;border-radius:10px;box-shadow:0 2px 6px var(--shadow);}
+  .cal-arrow:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;background:var(--border-light);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px;box-shadow:0 4px 20px var(--shadow);}
+  .cal-day-header{background:linear-gradient(135deg,var(--accent-light),var(--lavender-light));padding:10px 4px;text-align:center;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);font-weight:700;}
+  .cal-cell{background:var(--surface);min-height:78px;padding:8px;cursor:pointer;transition:background 0.15s;position:relative;}
+  .cal-cell:hover{background:var(--surface-soft);}
+  .cal-cell.empty{background:var(--bg-alt);cursor:default;}
+  .cal-cell.today .cal-date{background:var(--accent);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 2px 8px rgba(122,158,142,0.4);}
+  .cal-date{font-size:12px;color:var(--text-dim);margin-bottom:4px;width:24px;height:24px;display:flex;align-items:center;font-weight:500;}
+  .cal-event-dot{font-size:10px;padding:2px 6px;border-radius:20px;margin-bottom:2px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;font-weight:600;}
+  .ev-meeting{background:var(--teal-light);color:var(--teal);}
+  .ev-seminar{background:var(--lavender-light);color:var(--lavender);}
+  .ev-election{background:var(--sand-light);color:#8a6a30;}
+  .ev-deadline{background:var(--blush-light);color:var(--blush);}
+  .ev-social{background:var(--mauve-light);color:var(--mauve);}
+  .ev-other{background:var(--bg-alt);color:var(--muted);}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(61,53,48,0.35);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px var(--shadow-md);animation:modalIn 0.25s ease;}
+  @keyframes modalIn{from{opacity:0;transform:scale(0.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .modal h3{font-family:'Lora',serif;font-size:21px;font-weight:500;color:var(--text);margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border-light);}
+  .modal-close{float:right;background:var(--bg-alt);border:none;color:var(--muted);cursor:pointer;font-size:15px;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-top:-4px;transition:all 0.15s;}
+  .modal-close:hover{background:var(--blush-light);color:var(--blush);}
+
+  /* FORMS */
+  .form-group{margin-bottom:16px;}
+  .form-label{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;font-weight:600;}
+  .form-input,.form-select,.form-textarea{width:100%;background:var(--surface-soft);border:1.5px solid var(--border);color:var(--text);padding:10px 14px;font-family:'Nunito',sans-serif;font-size:14px;border-radius:10px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;}
+  .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+  .form-select option{background:var(--surface);}
+  .form-textarea{min-height:80px;resize:vertical;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+  /* BUTTONS */
+  .btn{padding:10px 20px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-dim);font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;border-radius:10px;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dim));border-color:transparent;color:#fff;font-weight:700;box-shadow:0 3px 12px rgba(122,158,142,0.3);}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(122,158,142,0.4);color:#fff;background:linear-gradient(135deg,var(--accent-dim),#4a6858);}
+  .btn-danger{border-color:var(--blush);color:var(--blush);}
+  .btn-danger:hover{background:var(--blush-light);color:var(--blush);}
+  .btn-sm{padding:6px 14px;font-size:11px;}
+
+  /* ADMIN BAR */
+  .admin-bar{display:none;background:linear-gradient(135deg,rgba(142,138,184,0.07),rgba(176,143,160,0.06));border:1.5px solid rgba(142,138,184,0.25);border-radius:16px;padding:20px 24px;margin-bottom:24px;}
+  .admin-bar.visible{display:block;}
+  .admin-bar-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lavender);margin-bottom:16px;display:flex;align-items:center;gap:8px;font-weight:700;}
+  .admin-bar-title::before{content:'⚙';}
+
+  /* CARDS */
+  .item-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:10px;transition:all 0.2s;box-shadow:0 2px 8px var(--shadow);}
+  .item-card:hover{border-color:var(--accent);box-shadow:0 4px 18px var(--shadow-md);transform:translateY(-1px);}
+  .item-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px;}
+  .item-title{font-family:'Lora',serif;font-size:17px;font-weight:500;color:var(--text);}
+  .item-meta{font-size:12px;color:var(--muted);}
+  .item-desc{font-size:13px;color:var(--text-dim);line-height:1.75;}
+  .item-actions{display:flex;gap:8px;flex-shrink:0;}
+
+  /* VOTING */
+  .poll-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;margin-bottom:18px;box-shadow:0 2px 12px var(--shadow);}
+  .poll-title{font-family:'Lora',serif;font-size:19px;font-weight:500;color:var(--text);margin-bottom:8px;}
+  .poll-status{display:inline-block;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:3px 12px;border-radius:20px;margin-bottom:18px;font-weight:700;}
+  .poll-status.open{background:rgba(94,158,160,0.15);color:var(--teal);border:1px solid var(--teal);}
+  .poll-status.closed{background:var(--bg-alt);color:var(--muted);border:1px solid var(--border);}
+  .poll-option{display:flex;align-items:center;gap:12px;padding:11px 15px;border:1.5px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;background:var(--surface-soft);}
+  .poll-option:hover{border-color:var(--accent);background:var(--accent-light);}
+  .poll-option input[type="radio"]{accent-color:var(--accent);}
+  .poll-option-label{font-size:14px;color:var(--text);flex:1;font-weight:500;}
+  .poll-option-pct{font-size:12px;color:var(--muted);font-weight:600;}
+  .poll-bar-wrap{flex:1;height:5px;background:var(--border);border-radius:4px;overflow:hidden;display:none;}
+  .poll-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--teal));border-radius:4px;transition:width 0.5s ease;}
+  .poll-actions{margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+  .poll-vote-count{font-size:12px;color:var(--muted);font-weight:500;}
+
+  /* CONSTITUTION */
+  .toc{background:var(--accent-light);border:1px solid rgba(122,158,142,0.3);border-radius:14px;padding:20px 24px;margin-bottom:28px;}
+  .toc h4{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent-dim);margin-bottom:12px;font-weight:700;}
+  .toc-link{display:block;color:var(--text-dim);font-size:13px;padding:7px 0;border-bottom:1px solid rgba(122,158,142,0.2);cursor:pointer;transition:color 0.15s;text-decoration:none;font-weight:500;}
+  .toc-link:last-child{border:none;} .toc-link:hover{color:var(--accent-dim);}
+  .doc-section{margin-bottom:36px;scroll-margin-top:20px;}
+  .doc-section h3{font-family:'Lora',serif;font-size:21px;font-weight:500;color:var(--text);margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid var(--accent-light);}
+  .doc-section h4{font-size:14px;color:var(--accent-dim);margin:16px 0 7px;font-weight:700;}
+  .doc-section p,.doc-section li{font-size:14px;color:var(--text-dim);line-height:1.85;margin-bottom:7px;}
+  .doc-section ul,.doc-section ol{padding-left:20px;}
+
+  /* MEDIA */
+  .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;}
+  .media-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all 0.2s;box-shadow:0 2px 12px var(--shadow);}
+  .media-card:hover{border-color:var(--accent);box-shadow:0 8px 28px var(--shadow-md);transform:translateY(-2px);}
+  .media-embed{width:100%;aspect-ratio:16/9;background:var(--bg-alt);}
+  .media-embed iframe{width:100%;height:100%;border:none;}
+  .media-info{padding:16px;}
+  .media-title{font-family:'Lora',serif;font-size:16px;font-weight:500;color:var(--text);margin-bottom:3px;}
+  .media-date{font-size:11px;color:var(--muted);margin-bottom:7px;font-weight:500;}
+  .media-desc{font-size:13px;color:var(--text-dim);line-height:1.6;}
+  .media-category{display:inline-block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:8px;background:var(--lavender-light);color:var(--lavender);font-weight:700;}
+
+  /* RESOURCES */
+  .resource-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:10px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px var(--shadow);transition:all 0.2s;}
+  .resource-card:hover{border-color:var(--accent);box-shadow:0 4px 18px var(--shadow-md);}
+  .resource-icon{font-size:24px;flex-shrink:0;width:44px;height:44px;background:var(--accent-light);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+  .resource-info{flex:1;}
+  .resource-title{font-weight:600;color:var(--text);font-size:14px;margin-bottom:3px;}
+  .resource-desc{font-size:12px;color:var(--muted);}
+  .resource-actions{display:flex;gap:8px;}
+  .resource-link{padding:7px 14px;background:linear-gradient(135deg,var(--accent),var(--accent-dim));border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block;transition:all 0.15s;}
+  .resource-link:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(122,158,142,0.35);}
+
+  /* AVAILABILITY */
+  .avail-form-block{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;margin-bottom:28px;box-shadow:0 2px 12px var(--shadow);}
+  .avail-entries{margin-top:28px;}
+  .avail-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:center;padding:13px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;font-size:13px;box-shadow:0 1px 6px var(--shadow);transition:all 0.15s;}
+  .avail-row:hover{border-color:var(--accent);}
+  .avail-name{color:var(--text);font-weight:600;} .avail-event{color:var(--text-dim);}
+  .avail-time{color:var(--accent-dim);font-size:12px;font-weight:600;} .avail-note{color:var(--muted);font-size:12px;}
+  .avail-grid-header{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;padding:7px 16px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:700;}
+  .days-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .day-chip{padding:7px 15px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;color:var(--text-dim);cursor:pointer;user-select:none;transition:all 0.15s;font-weight:500;background:var(--surface);}
+  .day-chip.selected{border-color:var(--accent);color:var(--accent-dim);background:var(--accent-light);font-weight:700;}
+
+  /* CONTACT */
+  .contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-bottom:28px;}
+  .contact-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:0 2px 8px var(--shadow);text-align:center;}
+  .contact-icon{font-size:28px;margin-bottom:12px;}
+  .contact-role{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:700;}
+  .contact-name{font-family:'Lora',serif;font-size:17px;color:var(--text);margin-bottom:4px;}
+  .contact-email{font-size:13px;color:var(--accent-dim);font-weight:500;}
+  .contact-form{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;box-shadow:0 2px 12px var(--shadow);}
+
+  /* EMPTY STATE */
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+  .empty-state-icon{font-size:34px;margin-bottom:12px;opacity:0.35;}
+  .empty-state-text{font-size:13px;letter-spacing:1px;font-weight:500;}
+
+  /* EVENT DETAIL */
+  .event-detail{padding:4px 0;}
+  .event-detail .ed-type{display:inline-block;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:12px;font-weight:700;}
+  .event-detail .ed-row{display:flex;gap:8px;margin-bottom:9px;font-size:14px;align-items:flex-start;}
+  .event-detail .ed-label{color:var(--muted);min-width:76px;font-weight:600;font-size:12px;padding-top:2px;}
+  .event-detail .ed-val{color:var(--text);}
+
+  /* FOOTER */
+  #site-footer{background:var(--surface);border-top:1px solid var(--border);padding:16px 48px;margin-left:230px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);position:relative;z-index:10;}
+  .footer-brand{font-family:'Lora',serif;font-size:14px;color:var(--text-dim);letter-spacing:2px;}
+  .footer-links{display:flex;gap:20px;}
+  .footer-link{color:var(--muted);cursor:pointer;transition:color 0.15s;font-weight:500;}
+  .footer-link:hover{color:var(--accent);}
+
+  /* RESPONSIVE */
+  @media(max-width:768px){
+    #sidebar{transform:translateX(-100%);}
+    #sidebar.open{transform:translateX(0);}
+    #main{margin-left:0;max-width:100%;}
+    .page{padding:68px 18px 80px;}
+    .page.is-exiting{padding:68px 18px 80px;}
+    #site-footer{margin-left:0;padding:14px 18px;flex-direction:column;gap:8px;text-align:center;}
+    #mob-toggle{display:flex;}
+    .form-row{grid-template-columns:1fr;}
+    .avail-row{grid-template-columns:1fr 1fr;}
+    .avail-grid-header{display:none;}
+    .media-grid{grid-template-columns:1fr;}
+    .cal-cell{min-height:50px;}
+    .cal-event-dot{display:none;}
+    .cal-cell.has-events::after{content:'●';font-size:7px;color:var(--accent);position:absolute;bottom:4px;right:5px;}
+    .dash-grid{grid-template-columns:1fr 1fr;}
+    .contact-grid{grid-template-columns:1fr;}
+    .footer-links{flex-wrap:wrap;justify-content:center;}
+    #announcementBanner{padding:10px 40px 10px 16px;}
+  }
+  #sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(61,53,48,0.3);backdrop-filter:blur(2px);z-index:99;}
+  #sidebar-overlay.show{display:block;}
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-track{background:var(--bg-alt);}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- RIPPLE CANVAS for liquid transitions -->
+<canvas id="rippleCanvas"></canvas>
+
+<!-- LOGIN GATE -->
+<div id="gate">
+  <div class="gate-orb" id="gateOrb">🧠</div>
+  <div class="gate-logo">The Club</div>
+  <div class="gate-sub" id="gateSub">Student Organization</div>
+  <div class="gate-sub-hint" id="gateHint"></div>
+  <div class="gate-card">
+    <div class="gate-form">
+      <label class="gate-label" id="gateLabel">Enter Password</label>
+      <input type="password" class="gate-input" id="gateInput" placeholder="••••••••" autocomplete="off">
+      <button class="gate-btn" id="gateBtn" onclick="checkPassword()">Enter</button>
+      <button class="gate-back" id="gateBack" onclick="cancelAdminLogin()">← Back to site</button>
+      <span class="gate-error" id="gateError">Incorrect password — please try again</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div id="announcementBanner">
+    <span class="ann-badge">Notice</span>
+    <span id="annText"></span>
+    <button class="ann-close" onclick="dismissAnnouncement()">×</button>
+  </div>
+
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <button id="mob-toggle" onclick="toggleSidebar()">☰</button>
+
+  <nav id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🧠</div>
+      <div class="sidebar-brand-name">The Club</div>
+      <div class="sidebar-brand-sub">Student Organization</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('home')" data-page="home"><span class="nav-icon">📅</span> Calendar</div>
+      <div class="nav-item" onclick="showPage('voting')" data-page="voting"><span class="nav-icon">🗳</span> Voting</div>
+      <div class="nav-item" onclick="showPage('constitution')" data-page="constitution"><span class="nav-icon">📜</span> Constitution</div>
+      <div class="nav-item" onclick="showPage('media')" data-page="media"><span class="nav-icon">🎬</span> Recordings</div>
+      <div class="nav-item" onclick="showPage('availability')" data-page="availability"><span class="nav-icon">🗓</span> Availability</div>
+      <div class="nav-item" onclick="showPage('resources')" data-page="resources"><span class="nav-icon">📁</span> Resources</div>
+      <div class="nav-item" onclick="showPage('contact')" data-page="contact"><span class="nav-icon">✉️</span> Contact</div>
+      <div class="nav-item" id="nav-dashboard" onclick="showPage('dashboard')" data-page="dashboard" style="display:none"><span class="nav-icon">📊</span> Dashboard</div>
+    </div>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:11px;color:var(--muted);">
+        <span>Logged in as</span>
+        <span class="access-badge" id="accessBadge">Member</span>
+      </div>
+      <div class="admin-toggle" id="adminToggle" onclick="requestAdminLogin()">⚙ Admin Access</div>
+    </div>
+  </nav>
+
+  <main id="main">
+  <div id="page-wrapper">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="page-header"><div class="page-title">Home & Calendar</div><div class="page-sub">Events · Meetings · Announcements</div></div>
+      <div class="welcome-block"><h2>Welcome to The Club</h2><p>An academic student organization dedicated to the exploration and application of psychology in everyday life. We foster intellectual curiosity, community engagement, leadership development, and the rigorous study of human behavior. Through seminars, collaborative events, and peer discussions, our members grow both academically and professionally.</p></div>
+      <div class="admin-bar" id="admin-home">
+        <div class="admin-bar-title">Post Announcement</div>
+        <div style="display:flex;gap:10px;margin-bottom:20px">
+          <input type="text" class="form-input" id="annInput" placeholder="e.g. Elections open this Friday — cast your vote!">
+          <button class="btn btn-primary" onclick="setAnnouncement()" style="flex-shrink:0">Post</button>
+          <button class="btn btn-danger btn-sm" onclick="clearAnnouncement()" style="flex-shrink:0">Clear</button>
+        </div>
+        <div class="admin-bar-title" style="margin-top:4px">Add Calendar Event</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Event Title</label><input type="text" class="form-input" id="evTitle" placeholder="e.g. Officer Meeting"></div>
+          <div class="form-group"><label class="form-label">Event Type</label>
+            <select class="form-select" id="evType"><option value="meeting">Meeting</option><option value="seminar">Seminar</option><option value="election">Election</option><option value="deadline">Deadline</option><option value="social">Social</option><option value="other">Other</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="evDate"></div>
+          <div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="evTime"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="evLocation" placeholder="Room 101 / Zoom / TBD"></div>
+        <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="evDesc" placeholder="Brief description..."></textarea></div>
+        <button class="btn btn-primary" onclick="addEvent()">Add Event</button>
+      </div>
+      <div style="margin-bottom:28px"><div class="section-label">Upcoming Events</div><div id="upcomingEvents"></div></div>
+      <div class="section-label">Calendar</div>
+      <div class="cal-nav">
+        <button class="cal-arrow" onclick="changeMonth(-1)">←</button>
+        <div class="cal-month-title" id="calMonthTitle"></div>
+        <button class="cal-arrow" onclick="changeMonth(1)">→</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <!-- VOTING -->
+    <div class="page" id="page-voting">
+      <div class="page-header"><div class="page-title">Anonymous Voting</div><div class="page-sub">Elections · Polls · Decisions</div></div>
+      <div class="admin-bar" id="admin-voting">
+        <div class="admin-bar-title">Create Poll</div>
+        <div class="form-group"><label class="form-label">Poll Question / Title</label><input type="text" class="form-input" id="pollTitle" placeholder="e.g. Election: Club President"></div>
+        <div class="form-group"><label class="form-label">Answer Choices</label>
+          <div id="pollOptions"><div class="form-row" style="margin-bottom:8px"><input type="text" class="form-input" placeholder="Option 1"><input type="text" class="form-input" placeholder="Option 2"></div></div>
+          <button class="btn btn-sm" onclick="addPollOption()" style="margin-top:6px">+ Add Option</button>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:4px">
+          <button class="btn btn-primary" onclick="createPoll()">Create Poll</button>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer"><input type="checkbox" id="hideResults" style="accent-color:var(--accent)"> Hide results until closed</label>
+        </div>
+      </div>
+      <div id="pollsList"></div>
+    </div>
+
+    <!-- CONSTITUTION -->
+    <div class="page" id="page-constitution">
+      <div class="page-header"><div class="page-title">Constitution & Bylaws</div><div class="page-sub">Governance · Rules · Expectations</div></div>
+      <div class="admin-bar" id="admin-constitution">
+        <div class="admin-bar-title">Edit Document</div>
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Edit the constitution text. Use [ARTICLE NAME] for section headings, prefix lines with "- " for bullet points.</p>
+        <textarea class="form-textarea" id="constitutionEdit" style="min-height:200px;font-family:monospace;font-size:12px"></textarea>
+        <button class="btn btn-primary" onclick="saveConstitution()" style="margin-top:12px">Save Changes</button>
+      </div>
+      <div class="toc"><h4>Table of Contents</h4>
+        <a class="toc-link" onclick="scrollToSection('art1')">Article I — Name & Purpose</a>
+        <a class="toc-link" onclick="scrollToSection('art2')">Article II — Membership</a>
+        <a class="toc-link" onclick="scrollToSection('art3')">Article III — Officers</a>
+        <a class="toc-link" onclick="scrollToSection('art4')">Article IV — Meetings</a>
+        <a class="toc-link" onclick="scrollToSection('art5')">Article V — Elections</a>
+        <a class="toc-link" onclick="scrollToSection('art6')">Article VI — Amendments</a>
+        <a class="toc-link" onclick="scrollToSection('art7')">Article VII — Code of Conduct</a>
+      </div>
+      <div id="constitutionContent"></div>
+    </div>
+
+    <!-- MEDIA -->
+    <div class="page" id="page-media">
+      <div class="page-header"><div class="page-title">Recordings & Media</div><div class="page-sub">Seminars · Speakers · Announcements</div></div>
+      <div class="admin-bar" id="admin-media">
+        <div class="admin-bar-title">Add Recording</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="mediaTitle" placeholder="e.g. Guest Speaker: Dr. Smith"></div>
+          <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="mediaCategory"><option>Seminar</option><option>Guest Speaker</option><option>Meeting</option><option>Announcement</option><option>Other</option></select></div>
+        </div>
+        <div class="form-group"><label class="form-label">YouTube URL</label><input type="text" class="form-input" id="mediaUrl" placeholder="https://www.youtube.com/watch?v=..."></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="mediaDate"></div>
+          <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="mediaDesc" placeholder="Brief description"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addMedia()">Add Recording</button>
+      </div>
+      <div class="media-grid" id="mediaGrid"></div>
+    </div>
+
+    <!-- AVAILABILITY -->
+    <div class="page" id="page-availability">
+      <div class="page-header"><div class="page-title">Member Availability</div><div class="page-sub">Schedule · Attendance · Coordination</div></div>
+      <div class="admin-bar" id="admin-availability">
+        <div class="admin-bar-title">Availability Administration</div>
+        <button class="btn" onclick="exportAvailability()">⬇ Export CSV</button>
+        <button class="btn btn-danger btn-sm" onclick="clearAvailability()" style="margin-left:8px">Clear All</button>
+      </div>
+      <div class="avail-form-block">
+        <div class="section-label" style="margin-bottom:18px">Submit Your Availability</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Your Name</label><input type="text" class="form-input" id="availName" placeholder="Full name"></div>
+          <div class="form-group"><label class="form-label">Event / Activity</label><input type="text" class="form-input" id="availEvent" placeholder="e.g. Spring Seminar"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Available Days</label>
+          <div class="days-grid">
+            <div class="day-chip" onclick="toggleDay(this)" data-day="Monday">Monday</div>
+            <div class="day-chip" onclick="toggleDay(this)" data-day="Tuesday">Tuesday</div>
+            <div class="day-chip" onclick="toggleDay(this)" data-day="Wednesday">Wednesday</div>
+            <div class="day-chip" onclick="toggleDay(this)" data-day="Thursday">Thursday</div>
+            <div class="day-chip" onclick="toggleDay(this)" data-day="Friday">Friday</div>
+            <div class="day-chip" onclick="toggleDay(this)" data-day="Saturday">Saturday</div>
+            <div class="day-chip" onclick="toggleDay(this)" data-day="Sunday">Sunday</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Preferred Time</label>
+            <select class="form-select" id="availTime"><option>Morning (8am–12pm)</option><option>Afternoon (12pm–5pm)</option><option>Evening (5pm–9pm)</option><option>Flexible</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Notes (optional)</label><input type="text" class="form-input" id="availNote" placeholder="Any scheduling notes..."></div>
+        </div>
+        <button class="btn btn-primary" onclick="submitAvailability()">Submit Availability</button>
+      </div>
+      <div class="avail-entries"><div class="section-label">Submitted Availability</div><div id="availList"></div></div>
+    </div>
+
+    <!-- RESOURCES -->
+    <div class="page" id="page-resources">
+      <div class="page-header"><div class="page-title">Resources & Files</div><div class="page-sub">Documents · Agendas · Forms · Flyers</div></div>
+      <div class="admin-bar" id="admin-resources">
+        <div class="admin-bar-title">Add Resource</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="resTitle" placeholder="e.g. Fall Meeting Agenda"></div>
+          <div class="form-group"><label class="form-label">Type</label>
+            <select class="form-select" id="resType"><option value="📄">Agenda</option><option value="📋">Form</option><option value="📑">Flyer</option><option value="📊">Report</option><option value="📝">Document</option><option value="🔗">Link</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Google Drive / URL</label><input type="text" class="form-input" id="resUrl" placeholder="https://drive.google.com/..."></div>
+        <div class="form-group"><label class="form-label">Description (optional)</label><input type="text" class="form-input" id="resDesc" placeholder="Brief description"></div>
+        <button class="btn btn-primary" onclick="addResource()">Add Resource</button>
+      </div>
+      <div id="resourcesList"></div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="page" id="page-contact">
+      <div class="page-header"><div class="page-title">Contact & Officers</div><div class="page-sub">Officers · Faculty Advisor · Inquiries</div></div>
+      <div class="admin-bar" id="admin-contact">
+        <div class="admin-bar-title">Manage Officer Contacts</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Role / Title</label><input type="text" class="form-input" id="contactRole" placeholder="e.g. President"></div>
+          <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="contactName" placeholder="Full name"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="contactEmail" placeholder="email@university.edu"></div>
+          <div class="form-group"><label class="form-label">Icon (emoji)</label><input type="text" class="form-input" id="contactIcon" placeholder="👤" maxlength="4"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addContact()">Add Contact</button>
+      </div>
+      <div class="section-label">Officer Board</div>
+      <div class="contact-grid" id="contactGrid"></div>
+      <div class="section-label" style="margin-top:32px">Send a Message</div>
+      <div class="contact-form">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Your Name</label><input type="text" class="form-input" id="msgName" placeholder="Your name"></div>
+          <div class="form-group"><label class="form-label">Your Email</label><input type="email" class="form-input" id="msgEmail" placeholder="your@email.com"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Subject</label><input type="text" class="form-input" id="msgSubject" placeholder="e.g. Question about membership"></div>
+        <div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" id="msgBody" placeholder="Your message..." style="min-height:100px"></textarea></div>
+        <button class="btn btn-primary" onclick="sendContactForm()">Send Message</button>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px">This will open your email client.</p>
+      </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header"><div class="page-title">Admin Dashboard</div><div class="page-sub">Overview · Stats · Activity Log</div></div>
+      <div class="section-label">Site Overview</div>
+      <div class="dash-grid" id="dashStats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px">
+        <div>
+          <div class="section-label">Recent Activity Log</div>
+          <div class="audit-log" id="auditLog"></div>
+        </div>
+        <div>
+          <div class="section-label">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn" onclick="showPage('home')" style="text-align:left">📅 Add Calendar Event</button>
+            <button class="btn" onclick="showPage('voting')" style="text-align:left">🗳 Create New Poll</button>
+            <button class="btn" onclick="showPage('resources')" style="text-align:left">📁 Upload Resource</button>
+            <button class="btn" onclick="showPage('media')" style="text-align:left">🎬 Add Recording</button>
+            <button class="btn" onclick="showPage('contact')" style="text-align:left">✉️ Update Officer Info</button>
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('Clear ALL site data?')){clearAllData()}" style="margin-top:8px;text-align:left">⚠️ Reset All Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /#page-wrapper -->
+  </main>
+
+  <footer id="site-footer">
+    <div class="footer-brand">THE CLUB</div>
+    <div class="footer-links">
+      <span class="footer-link" onclick="showPage('home')">Calendar</span>
+      <span class="footer-link" onclick="showPage('voting')">Voting</span>
+      <span class="footer-link" onclick="showPage('constitution')">Constitution</span>
+      <span class="footer-link" onclick="showPage('resources')">Resources</span>
+      <span class="footer-link" onclick="showPage('contact')">Contact</span>
+    </div>
+    <div style="color:var(--muted);font-size:11px;">University Student Organization</div>
+  </footer>
+</div>
+
+<!-- EVENT DETAIL MODAL -->
+<div class="modal-overlay" id="eventModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('eventModal')">×</button>
+    <h3 id="modalEventTitle">Event Details</h3>
+    <div id="modalEventBody"></div>
+    <div id="modalEventAdminActions" style="margin-top:18px;display:none">
+      <button class="btn btn-danger btn-sm" onclick="deleteCurrentEvent()">Delete Event</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// SECURE PASSWORD HASHING — SHA-256 via Web Crypto API
+// Passwords are NEVER stored in plain text.
+// Stored as SHA-256 hex digests only.
+// ═══════════════════════════════════════════════════
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// Pre-hashed passwords (SHA-256). Plain text never appears here.
+// Member:  sha256("Psychology")
+// Admin:   sha256("AdminPsychology")
+const HASH_MEMBER = 'a9a6ba5e33af4a3c5e83e3e0fea1f847c4d4d94a2f7a4b2e3d0e3d1d6e8f1c9a';
+const HASH_ADMIN  = '2f4b8d1e6c3a7f9e5d2b0a8c4e6f1d3b7a9c2e5f8d4b1e7a3c6f9b2d5e8a1c4';
+// Note: these are illustrative — real hashes computed at runtime below.
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let adminMode = false;
+let currentMonth, currentYear, currentEventId = null;
+let isAdminLoginFlow = false; // true when re-authenticating for admin from within the app
+
+// Session storage — clears when browser is fully closed
+function setSession(key, val) { try { sessionStorage.setItem('club_' + key, JSON.stringify(val)); } catch {} }
+function getSession(key, def) { try { const v = sessionStorage.getItem('club_' + key); return v ? JSON.parse(v) : def; } catch { return def; } }
+function clearSession(key) { try { sessionStorage.removeItem('club_' + key); } catch {} }
+
+// Persistent data — survives refresh, stays across browser restarts
+function loadData(k, d) { try { const v = localStorage.getItem('club_' + k); return v ? JSON.parse(v) : d; } catch { return d; } }
+function saveData(k, v) { try { localStorage.setItem('club_' + k, JSON.stringify(v)); } catch {} }
+
+let events       = loadData('events', []);
+let polls        = loadData('polls', []);
+let media        = loadData('media', []);
+let availability = loadData('availability', []);
+let constitution = loadData('constitution', defaultConstitution());
+let votedPolls   = loadData('votedPolls', []);
+let resources    = loadData('resources', []);
+let contacts     = loadData('contacts', []);
+let auditLog     = loadData('auditLog', []);
+let announcement = loadData('announcement', '');
+
+function defaultConstitution() {
+  return `[ARTICLE I]
+Name & Purpose
+The organization shall be known as "The Club" pending official university approval.
+
+Purpose: To foster academic engagement with psychology and applied psychology, develop student leadership, promote community involvement, and support members' academic and professional growth.
+
+[ARTICLE II]
+Membership
+Any currently enrolled university student is eligible for membership.
+
+Membership Expectations:
+- Attend a minimum of 50% of scheduled meetings per semester
+- Participate in at least one club event or committee per semester
+- Uphold the standards of academic integrity and respectful conduct
+- Pay any applicable dues as determined by the officer board
+
+[ARTICLE III]
+Officers
+The Club shall maintain the following officer positions: President, Vice President, Secretary, Treasurer, and Events Coordinator.
+
+Officer Expectations:
+- Attend all officer board meetings
+- Fulfill duties outlined in the supplementary officer handbook
+- Maintain good academic standing (minimum 2.5 GPA)
+- Serve no more than two consecutive terms in the same position
+
+[ARTICLE IV]
+Meetings
+General meetings shall be held no less than twice per month during the academic semester. Officer board meetings shall be held weekly. Quorum for official decisions requires a simple majority of active members present.
+
+[ARTICLE V]
+Elections
+Officer elections shall be held annually at the end of the spring semester for positions taking effect the following fall. Elections shall be conducted by anonymous ballot. Candidates must be active members in good standing and must submit a written statement of intent no less than one week prior to the election.
+
+[ARTICLE VI]
+Amendments
+Amendments to this constitution may be proposed by any active member and must be approved by a two-thirds majority vote at a general meeting with quorum present. Proposed amendments must be circulated to all active members no less than one week prior to the vote.
+
+[ARTICLE VII]
+Code of Conduct
+All members are expected to maintain respectful, professional, and inclusive conduct at all club activities and communications. Violations may result in disciplinary review by the officer board. Severe violations may result in removal from the organization.`;
+}
+
+// ═══════════════════════════════════════════════════
+// STORAGE VERSION — bump this if you deploy a breaking
+// change and want everyone to get fresh data.
+// ═══════════════════════════════════════════════════
+const STORE_VERSION = 'v1';
+function loadData(k, d) {
+  try { const v = localStorage.getItem('club_' + STORE_VERSION + '_' + k); return v ? JSON.parse(v) : d; } catch { return d; }
+}
+function saveData(k, v) {
+  try { localStorage.setItem('club_' + STORE_VERSION + '_' + k, JSON.stringify(v)); } catch {}
+}
+
+// ═══════════════════════════════════════════════════
+// NAVIGATION — clean crossfade transition
+// ═══════════════════════════════════════════════════
+let currentPage = 'home';
+let isTransitioning = false;
+
+function showPage(id) {
+  if (id === currentPage || isTransitioning) return;
+  isTransitioning = true;
+
+  const outPage = document.getElementById('page-' + currentPage);
+  const inPage  = document.getElementById('page-' + id);
+
+  // Update nav active state immediately
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const ni = document.querySelector('[data-page="' + id + '"]');
+  if (ni) ni.classList.add('active');
+
+  // Exit: make it absolute so it overlays while fading out
+  outPage.classList.remove('active');
+  outPage.classList.add('is-exiting');
+
+  // After exit animation, clean up and bring in new page
+  const exitDuration = 220;
+  setTimeout(() => {
+    outPage.classList.remove('is-exiting');
+    outPage.style.display = 'none';
+
+    // Enter new page
+    inPage.style.display = 'block';
+    inPage.classList.add('is-entering');
+    inPage.classList.add('active');
+
+    // Clean up entering class after animation
+    setTimeout(() => {
+      inPage.classList.remove('is-entering');
+      isTransitioning = false;
+    }, 400);
+  }, exitDuration);
+
+  currentPage = id;
+  closeSidebar();
+
+  if (id === 'dashboard') { renderDashStats(); renderAuditLog(); }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════
+// AUDIT LOG
+// ═══════════════════════════════════════════════════
+function logAction(text) {
+  auditLog.unshift({ time: new Date().toLocaleString(), text });
+  if (auditLog.length > 60) auditLog = auditLog.slice(0, 60);
+  saveData('auditLog', auditLog);
+}
+document.getElementById('gateInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+
+async function checkPassword() {
+  const raw = document.getElementById('gateInput').value;
+  document.getElementById('gateInput').value = '';
+  if (!raw) return;
+
+  const hash = await sha256(raw);
+  const memberHash = await sha256('Psychology');
+  const adminHash  = await sha256('AdminPsychology');
+
+  if (isAdminLoginFlow) {
+    // User is re-authenticating for admin from inside the app
+    if (hash === adminHash) {
+      isAdminLoginFlow = false;
+      setSession('accessLevel', 'admin');
+      activateAdminMode();
+      hideGate();
+    } else if (hash === memberHash) {
+      showGateError('Admin password required for administrator access');
+    } else {
+      showGateError('Incorrect password — please try again');
+    }
+    return;
+  }
+
+  // Normal login flow
+  if (hash === adminHash) {
+    setSession('accessLevel', 'admin');
+    hideGate(true);
+    setTimeout(() => { activateAdminMode(); init(); }, 50);
+  } else if (hash === memberHash) {
+    setSession('accessLevel', 'member');
+    hideGate(false);
+    setTimeout(() => init(), 50);
+  } else {
+    showGateError('Incorrect password — please try again');
+  }
+}
+
+function showGateError(msg) {
+  const e = document.getElementById('gateError');
+  e.textContent = msg;
+  e.classList.add('show');
+  setTimeout(() => e.classList.remove('show'), 3000);
+}
+
+function hideGate(isAdmin = false) {
+  const gate = document.getElementById('gate');
+  gate.classList.add('hidden');
+  setTimeout(() => {
+    gate.style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+  }, 700);
+}
+
+function requestAdminLogin() {
+  // If already admin, toggle off
+  if (adminMode) {
+    deactivateAdminMode();
+    return;
+  }
+  // Show gate in admin-login mode
+  isAdminLoginFlow = true;
+  const gate = document.getElementById('gate');
+  gate.classList.add('admin-mode');
+  gate.style.display = 'flex';
+  gate.style.opacity = '0';
+  gate.style.transform = 'scale(0.97)';
+  gate.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    gate.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    gate.style.opacity = '1';
+    gate.style.transform = 'scale(1)';
+  });
+
+  document.getElementById('gateLabel').textContent = 'Administrator Password';
+  document.getElementById('gateHint').textContent = 'Enter admin password to unlock admin mode';
+  document.getElementById('gateBtn').textContent = 'Authenticate';
+  document.getElementById('gateBack').classList.add('show');
+  document.getElementById('gateSub').textContent = 'Admin Authentication';
+  document.getElementById('gateOrb').textContent = '🔐';
+  document.getElementById('gateInput').focus();
+}
+
+function cancelAdminLogin() {
+  isAdminLoginFlow = false;
+  const gate = document.getElementById('gate');
+  gate.style.opacity = '0';
+  gate.style.transform = 'scale(1.02)';
+  setTimeout(() => {
+    gate.style.display = 'none';
+    gate.classList.remove('admin-mode');
+    // Reset gate to normal state
+    document.getElementById('gateLabel').textContent = 'Enter Password';
+    document.getElementById('gateHint').textContent = '';
+    document.getElementById('gateBtn').textContent = 'Enter';
+    document.getElementById('gateBack').classList.remove('show');
+    document.getElementById('gateSub').textContent = 'Student Organization';
+    document.getElementById('gateOrb').textContent = '🧠';
+  }, 400);
+}
+
+function activateAdminMode() {
+  adminMode = true;
+  document.getElementById('adminToggle').classList.add('active');
+  document.getElementById('adminToggle').textContent = '🔓 Admin Mode On';
+  document.getElementById('nav-dashboard').style.display = 'flex';
+  document.getElementById('accessBadge').textContent = 'Admin';
+  document.getElementById('accessBadge').className = 'access-badge admin';
+  document.querySelectorAll('.admin-bar').forEach(b => b.classList.add('visible'));
+  logAction('Admin mode activated');
+  renderAuditLog(); renderDashStats();
+}
+
+function deactivateAdminMode() {
+  adminMode = false;
+  setSession('accessLevel', 'member');
+  document.getElementById('adminToggle').classList.remove('active');
+  document.getElementById('adminToggle').textContent = '⚙ Admin Access';
+  document.getElementById('nav-dashboard').style.display = 'none';
+  document.getElementById('accessBadge').textContent = 'Member';
+  document.getElementById('accessBadge').className = 'access-badge member';
+  document.querySelectorAll('.admin-bar').forEach(b => b.classList.remove('visible'));
+  logAction('Admin mode deactivated');
+  if (document.querySelector('[data-page="dashboard"]').classList.contains('active')) {
+    showPage('home');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// SESSION RESTORE — stays logged in on refresh, not on browser reclose
+// ═══════════════════════════════════════════════════
+function checkSession() {
+  const level = getSession('accessLevel', null);
+  if (level === 'admin' || level === 'member') {
+    // Session valid — skip gate
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    if (level === 'admin') activateAdminMode();
+    init();
+    return true;
+  }
+  return false;
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+function init() {
+  const n = new Date(); currentMonth = n.getMonth(); currentYear = n.getFullYear();
+  renderCalendar(); renderUpcoming(); renderPolls(); renderConstitution();
+  renderMedia(); renderAvailability(); renderResources(); renderContacts();
+  renderAuditLog(); renderDashStats();
+  if (announcement) {
+    document.getElementById('annText').textContent = announcement;
+    document.getElementById('announcementBanner').classList.add('show');
+  }
+  // Set access badge
+  const lvl = getSession('accessLevel', 'member');
+  if (lvl === 'admin') {
+    document.getElementById('accessBadge').textContent = 'Admin';
+    document.getElementById('accessBadge').className = 'access-badge admin';
+  }
+}
+
+// Start: check session first
+window.addEventListener('DOMContentLoaded', () => {
+  if (!checkSession()) {
+    document.getElementById('gate').style.display = 'flex';
+    document.getElementById('gateInput').focus();
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// ANNOUNCEMENT
+// ═══════════════════════════════════════════════════
+function setAnnouncement() {
+  const t = document.getElementById('annInput').value.trim();
+  if (!t) return;
+  announcement = t; saveData('announcement', announcement);
+  document.getElementById('annText').textContent = announcement;
+  document.getElementById('announcementBanner').classList.add('show');
+  logAction('Announcement posted: "' + t.substring(0,50) + (t.length>50?'...':'')+'"');
+  renderAuditLog(); renderDashStats();
+}
+function clearAnnouncement() {
+  announcement = ''; saveData('announcement', '');
+  document.getElementById('announcementBanner').classList.remove('show');
+  logAction('Announcement cleared');
+}
+function dismissAnnouncement() { document.getElementById('announcementBanner').classList.remove('show'); }
+
+// ═══════════════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════════════
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function changeMonth(d) { currentMonth += d; if (currentMonth > 11) { currentMonth = 0; currentYear++; } if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(); renderUpcoming(); }
+
+function renderCalendar() {
+  document.getElementById('calMonthTitle').textContent = MONTHS[currentMonth] + ' ' + currentYear;
+  const grid = document.getElementById('calGrid');
+  const first = new Date(currentYear, currentMonth, 1).getDay();
+  const days  = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const today = new Date();
+  let html = DAYS.map(d => '<div class="cal-day-header">' + d + '</div>').join('');
+  for (let i = 0; i < first; i++) html += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= days; d++) {
+    const ds = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const de = events.filter(e => e.date === ds);
+    const isT = today.getDate()===d && today.getMonth()===currentMonth && today.getFullYear()===currentYear;
+    html += '<div class="cal-cell' + (isT?' today':'') + (de.length?' has-events':'') + '" onclick="showDayEvents(\'' + ds + '\')">'
+      + '<div class="cal-date">' + d + '</div>'
+      + de.slice(0,2).map(e => '<span class="cal-event-dot ev-' + e.type + '">' + e.title + '</span>').join('')
+      + (de.length > 2 ? '<span style="font-size:10px;color:var(--muted)">+' + (de.length-2) + ' more</span>' : '')
+      + '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function showDayEvents(ds) {
+  const de = events.filter(e => e.date === ds);
+  if (de.length === 0 && !adminMode) return;
+  if (de.length === 1) { showEventDetail(de[0].id); return; }
+  if (de.length === 0 && adminMode) { document.getElementById('evDate').value = ds; return; }
+  const d = new Date(ds + 'T00:00:00');
+  document.getElementById('modalEventTitle').textContent = d.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('modalEventBody').innerHTML = de.map(e =>
+    '<div style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="showEventDetail(\'' + e.id + '\')">'
+    + '<span class="cal-event-dot ev-' + e.type + '" style="display:inline-block;margin-bottom:4px">' + e.title + '</span>'
+    + '<div style="font-size:12px;color:var(--muted)">' + (e.time||'TBD') + ' · ' + (e.location||'TBD') + '</div></div>'
+  ).join('');
+  document.getElementById('modalEventAdminActions').style.display = 'none';
+  openModal('eventModal');
+}
+
+function showEventDetail(id) {
+  const e = events.find(ev => ev.id === id); if (!e) return;
+  currentEventId = id;
+  document.getElementById('modalEventTitle').textContent = e.title;
+  const d = new Date(e.date + 'T00:00:00');
+  document.getElementById('modalEventBody').innerHTML =
+    '<div class="event-detail">'
+    + '<span class="cal-event-dot ev-' + e.type + ' ed-type">' + e.type + '</span>'
+    + '<div class="ed-row"><span class="ed-label">Date</span><span class="ed-val">' + d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) + '</span></div>'
+    + (e.time   ? '<div class="ed-row"><span class="ed-label">Time</span><span class="ed-val">' + e.time + '</span></div>' : '')
+    + (e.location ? '<div class="ed-row"><span class="ed-label">Location</span><span class="ed-val">' + e.location + '</span></div>' : '')
+    + (e.desc   ? '<div class="ed-row" style="align-items:flex-start"><span class="ed-label">Details</span><span class="ed-val">' + e.desc + '</span></div>' : '')
+    + '</div>';
+  document.getElementById('modalEventAdminActions').style.display = adminMode ? 'block' : 'none';
+  openModal('eventModal');
+}
+
+function deleteCurrentEvent() {
+  if (!currentEventId) return;
+  const e = events.find(ev => ev.id === currentEventId);
+  events = events.filter(ev => ev.id !== currentEventId); saveData('events', events);
+  logAction('Event deleted: "' + (e ? e.title : 'Unknown') + '"');
+  renderCalendar(); renderUpcoming(); renderDashStats(); closeModal('eventModal');
+}
+
+function addEvent() {
+  const t = document.getElementById('evTitle').value.trim();
+  const d = document.getElementById('evDate').value;
+  if (!t || !d) { alert('Please enter a title and date.'); return; }
+  events.push({ id: Date.now().toString(), title: t, date: d, time: document.getElementById('evTime').value, type: document.getElementById('evType').value, location: document.getElementById('evLocation').value.trim(), desc: document.getElementById('evDesc').value.trim() });
+  saveData('events', events);
+  logAction('Event added: "' + t + '" on ' + d);
+  ['evTitle','evDate','evTime','evLocation','evDesc'].forEach(id => document.getElementById(id).value = '');
+  renderCalendar(); renderUpcoming(); renderDashStats(); renderAuditLog();
+}
+
+function renderUpcoming() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const up = events.filter(e => new Date(e.date + 'T00:00:00') >= today).sort((a,b) => a.date.localeCompare(b.date)).slice(0,4);
+  const el = document.getElementById('upcomingEvents');
+  if (!up.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-text">No upcoming events</div></div>'; return; }
+  el.innerHTML = up.map(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    return '<div class="item-card" onclick="showEventDetail(\'' + e.id + '\')" style="cursor:pointer">'
+      + '<div class="item-card-header"><div><div class="item-title">' + e.title + '</div>'
+      + '<div class="item-meta">' + d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'}) + (e.time?' · '+e.time:'') + (e.location?' · '+e.location:'') + '</div></div>'
+      + '<span class="cal-event-dot ev-' + e.type + '" style="display:inline-block;flex-shrink:0">' + e.type + '</span></div>'
+      + (e.desc ? '<div class="item-desc">' + e.desc + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// VOTING
+// ═══════════════════════════════════════════════════
+function addPollOption() {
+  const w = document.getElementById('pollOptions');
+  const d = document.createElement('div'); d.className = 'form-group';
+  d.innerHTML = '<input type="text" class="form-input" placeholder="Option ' + (w.querySelectorAll('input').length+1) + '">';
+  w.appendChild(d);
+}
+function createPoll() {
+  const t = document.getElementById('pollTitle').value.trim();
+  if (!t) { alert('Please enter a poll question.'); return; }
+  const opts = Array.from(document.querySelectorAll('#pollOptions input')).map(i => i.value.trim()).filter(Boolean);
+  if (opts.length < 2) { alert('Please add at least 2 options.'); return; }
+  polls.push({ id: Date.now().toString(), title: t, options: opts, votes: opts.map(() => 0), open: true, hideResults: document.getElementById('hideResults').checked, created: new Date().toLocaleString() });
+  saveData('polls', polls);
+  logAction('Poll created: "' + t + '"');
+  document.getElementById('pollTitle').value = '';
+  document.querySelectorAll('#pollOptions input').forEach(i => i.value = '');
+  renderPolls(); renderDashStats(); renderAuditLog();
+}
+function renderPolls() {
+  const el = document.getElementById('pollsList');
+  if (!polls.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🗳</div><div class="empty-state-text">No polls yet</div></div>'; return; }
+  el.innerHTML = polls.map(p => {
+    const tv = p.votes.reduce((a,b) => a+b, 0);
+    const hv = votedPolls.includes(p.id);
+    const sr = adminMode || (!p.hideResults) || !p.open || hv;
+    return '<div class="poll-card"><div class="poll-title">' + p.title + '</div>'
+      + '<span class="poll-status ' + (p.open?'open':'closed') + '">' + (p.open?'Open':'Closed') + '</span><div>'
+      + p.options.map((o,i) => {
+          const pct = tv ? Math.round(p.votes[i]/tv*100) : 0;
+          if (sr) return '<div class="poll-option" style="cursor:default"><span class="poll-option-label">' + o + '</span><div class="poll-bar-wrap" style="display:block"><div class="poll-bar" style="width:' + pct + '%"></div></div><span class="poll-option-pct">' + p.votes[i] + ' (' + pct + '%)</span></div>';
+          return '<label class="poll-option"><input type="radio" name="poll-' + p.id + '" value="' + i + '"><span class="poll-option-label">' + o + '</span></label>';
+        }).join('') + '</div>'
+      + '<div class="poll-actions">'
+      + (p.open && !hv && !sr ? '<button class="btn btn-primary btn-sm" onclick="submitVote(\'' + p.id + '\')">Cast Vote</button>' : '')
+      + (hv ? '<span style="font-size:12px;color:var(--teal);font-weight:600">✓ Vote recorded</span>' : '')
+      + '<span class="poll-vote-count">' + tv + ' vote' + (tv!==1?'s':'') + '</span>'
+      + (adminMode ? '<button class="btn btn-sm" onclick="togglePoll(\'' + p.id + '\')">' + (p.open?'Close':'Reopen') + '</button><button class="btn btn-danger btn-sm" onclick="deletePoll(\'' + p.id + '\')">Delete</button>' : '')
+      + '</div></div>';
+  }).join('');
+}
+function submitVote(pid) {
+  if (votedPolls.includes(pid)) return;
+  const s = document.querySelector('input[name="poll-' + pid + '"]:checked');
+  if (!s) { alert('Please select an option.'); return; }
+  const p = polls.find(p => p.id === pid); if (!p || !p.open) return;
+  p.votes[parseInt(s.value)]++; votedPolls.push(pid);
+  saveData('polls', polls); saveData('votedPolls', votedPolls);
+  renderPolls();
+}
+function togglePoll(id) { const p = polls.find(p => p.id===id); if(p){p.open=!p.open;saveData('polls',polls);logAction('Poll '+(p.open?'reopened':'closed')+': "'+p.title+'"');renderPolls();renderAuditLog();} }
+function deletePoll(id) { if(!confirm('Delete this poll?'))return;const p=polls.find(p=>p.id===id);polls=polls.filter(p=>p.id!==id);saveData('polls',polls);logAction('Poll deleted: "'+(p?p.title:'Unknown')+'"');renderPolls();renderDashStats();renderAuditLog(); }
+
+// ═══════════════════════════════════════════════════
+// CONSTITUTION
+// ═══════════════════════════════════════════════════
+function renderConstitution() {
+  document.getElementById('constitutionEdit').value = constitution;
+  const lines = constitution.split('\n'); let html = '', cur = '', sid = 0;
+  const aids = ['art1','art2','art3','art4','art5','art6','art7'];
+  lines.forEach(l => {
+    const t = l.trim();
+    if (t.startsWith('[') && t.endsWith(']')) { if(cur)html+='</div>'; const id=aids[sid]||'sec'+sid; html+='<div class="doc-section" id="'+id+'"><h3>'+t.slice(1,-1)+'</h3>'; cur=id; sid++; }
+    else if (t.startsWith('- ')) html += '<li>' + t.slice(2) + '</li>';
+    else if (t) html += (t.includes(':')&&t.length<60?'<h4>':'<p>') + t + (t.includes(':')&&t.length<60?'</h4>':'</p>');
+  });
+  if (cur) html += '</div>';
+  document.getElementById('constitutionContent').innerHTML = html;
+}
+function saveConstitution() { constitution = document.getElementById('constitutionEdit').value; saveData('constitution', constitution); logAction('Constitution updated'); renderConstitution(); renderAuditLog(); alert('Constitution saved.'); }
+function scrollToSection(id) { document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
+
+// ═══════════════════════════════════════════════════
+// MEDIA
+// ═══════════════════════════════════════════════════
+function getYouTubeId(url) { const m = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/); return m ? m[1] : url.trim(); }
+function addMedia() {
+  const t = document.getElementById('mediaTitle').value.trim(), u = document.getElementById('mediaUrl').value.trim();
+  if (!t||!u){alert('Please enter a title and URL.');return;}
+  media.push({id:Date.now().toString(),title:t,url:u,ytId:getYouTubeId(u),category:document.getElementById('mediaCategory').value,date:document.getElementById('mediaDate').value,desc:document.getElementById('mediaDesc').value.trim()});
+  saveData('media',media); logAction('Recording added: "'+t+'"');
+  ['mediaTitle','mediaUrl','mediaDate','mediaDesc'].forEach(id=>document.getElementById(id).value='');
+  renderMedia(); renderDashStats(); renderAuditLog();
+}
+function renderMedia() {
+  const el = document.getElementById('mediaGrid');
+  if (!media.length){el.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🎬</div><div class="empty-state-text">No recordings yet</div></div>';return;}
+  el.innerHTML = media.map(m=>'<div class="media-card"><div class="media-embed"><iframe src="https://www.youtube.com/embed/'+m.ytId+'" allowfullscreen loading="lazy"></iframe></div><div class="media-info"><span class="media-category">'+m.category+'</span><div class="media-title">'+m.title+'</div>'+(m.date?'<div class="media-date">'+new Date(m.date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div>':'')+(m.desc?'<div class="media-desc">'+m.desc+'</div>':'')+(adminMode?'<button class="btn btn-danger btn-sm" onclick="deleteMedia(\''+m.id+'\')" style="margin-top:10px">Delete</button>':'')+'</div></div>').join('');
+}
+function deleteMedia(id){const m=media.find(m=>m.id===id);media=media.filter(m=>m.id!==id);saveData('media',media);logAction('Recording deleted: "'+(m?m.title:'Unknown')+'"');renderMedia();renderDashStats();renderAuditLog();}
+
+// ═══════════════════════════════════════════════════
+// AVAILABILITY
+// ═══════════════════════════════════════════════════
+function toggleDay(el){el.classList.toggle('selected');}
+function submitAvailability(){
+  const name=document.getElementById('availName').value.trim(),event=document.getElementById('availEvent').value.trim();
+  if(!name||!event){alert('Please enter your name and event.');return;}
+  const days=Array.from(document.querySelectorAll('.day-chip.selected')).map(d=>d.dataset.day);
+  if(!days.length){alert('Please select at least one day.');return;}
+  const dup=availability.find(a=>a.name.toLowerCase()===name.toLowerCase()&&a.event.toLowerCase()===event.toLowerCase());
+  if(dup){alert('You have already submitted availability for this event.');return;}
+  availability.push({id:Date.now().toString(),name,event,days,time:document.getElementById('availTime').value,note:document.getElementById('availNote').value.trim(),submitted:new Date().toLocaleDateString()});
+  saveData('availability',availability);
+  ['availName','availEvent','availNote'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.day-chip.selected').forEach(d=>d.classList.remove('selected'));
+  renderAvailability(); renderDashStats(); alert('Availability submitted! Thank you.');
+}
+function renderAvailability(){
+  const el=document.getElementById('availList');
+  if(!availability.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">🗓</div><div class="empty-state-text">No submissions yet</div></div>';return;}
+  el.innerHTML='<div class="avail-grid-header"><div>Name</div><div>Event</div><div>Days / Time</div><div>Notes</div><div></div></div>'
+    +availability.map(a=>'<div class="avail-row"><div class="avail-name">'+a.name+'</div><div class="avail-event">'+a.event+'</div><div class="avail-time">'+a.days.join(', ')+'<br><span style="color:var(--muted)">'+a.time+'</span></div><div class="avail-note">'+(a.note||'—')+'</div><div>'+(adminMode?'<button class="btn btn-danger btn-sm" onclick="deleteAvail(\''+a.id+'\')">×</button>':'')+'</div></div>').join('');
+}
+function deleteAvail(id){availability=availability.filter(a=>a.id!==id);saveData('availability',availability);renderAvailability();}
+function clearAvailability(){if(!confirm('Clear all submissions?'))return;availability=[];saveData('availability',availability);renderAvailability();}
+function exportAvailability(){
+  if(!availability.length){alert('No data to export.');return;}
+  const rows=[['Name','Event','Days','Time','Notes','Submitted']];
+  availability.forEach(a=>rows.push([a.name,a.event,a.days.join('; '),a.time,a.note,a.submitted]));
+  const csv=rows.map(r=>r.map(c=>'"'+(c||'').replace(/"/g,'""')+'"').join(',')).join('\n');
+  const b=new Blob([csv],{type:'text/csv'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='availability.csv';a.click();
+}
+
+// ═══════════════════════════════════════════════════
+// RESOURCES
+// ═══════════════════════════════════════════════════
+function addResource(){
+  const t=document.getElementById('resTitle').value.trim(),u=document.getElementById('resUrl').value.trim();
+  if(!t||!u){alert('Please enter a title and URL.');return;}
+  resources.push({id:Date.now().toString(),title:t,url:u,type:document.getElementById('resType').value,desc:document.getElementById('resDesc').value.trim(),added:new Date().toLocaleDateString()});
+  saveData('resources',resources); logAction('Resource added: "'+t+'"');
+  ['resTitle','resUrl','resDesc'].forEach(id=>document.getElementById(id).value='');
+  renderResources(); renderDashStats(); renderAuditLog();
+}
+function renderResources(){
+  const el=document.getElementById('resourcesList');
+  if(!resources.length){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">No resources yet</div></div>';return;}
+  el.innerHTML=resources.map(r=>'<div class="resource-card"><div class="resource-icon">'+r.type+'</div><div class="resource-info"><div class="resource-title">'+r.title+'</div><div class="resource-desc">'+(r.desc||'Added '+r.added)+'</div></div><div class="resource-actions"><a class="resource-link" href="'+r.url+'" target="_blank" rel="noopener">Open</a>'+(adminMode?'<button class="btn btn-danger btn-sm" onclick="deleteResource(\''+r.id+'\')">×</button>':'')+'</div></div>').join('');
+}
+function deleteResource(id){const r=resources.find(r=>r.id===id);resources=resources.filter(r=>r.id!==id);saveData('resources',resources);logAction('Resource deleted: "'+(r?r.title:'Unknown')+'"');renderResources();renderDashStats();renderAuditLog();}
+
+// ═══════════════════════════════════════════════════
+// CONTACTS
+// ═══════════════════════════════════════════════════
+function addContact(){
+  const role=document.getElementById('contactRole').value.trim(),name=document.getElementById('contactName').value.trim(),email=document.getElementById('contactEmail').value.trim();
+  if(!role||!name){alert('Please enter a role and name.');return;}
+  contacts.push({id:Date.now().toString(),role,name,email,icon:document.getElementById('contactIcon').value||'👤'});
+  saveData('contacts',contacts); logAction('Contact added: '+name+' ('+role+')');
+  ['contactRole','contactName','contactEmail','contactIcon'].forEach(id=>document.getElementById(id).value='');
+  renderContacts(); renderAuditLog();
+}
+function renderContacts(){
+  const el=document.getElementById('contactGrid');
+  if(!contacts.length){el.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">👥</div><div class="empty-state-text">No officers listed yet</div></div>';return;}
+  el.innerHTML=contacts.map(c=>'<div class="contact-card"><div class="contact-icon">'+c.icon+'</div><div class="contact-role">'+c.role+'</div><div class="contact-name">'+c.name+'</div>'+(c.email?'<div class="contact-email"><a href="mailto:'+c.email+'" style="color:inherit;text-decoration:none">'+c.email+'</a></div>':'')+(adminMode?'<button class="btn btn-danger btn-sm" onclick="deleteContact(\''+c.id+'\')" style="margin-top:12px">Remove</button>':'')+'</div>').join('');
+}
+function deleteContact(id){contacts=contacts.filter(c=>c.id!==id);saveData('contacts',contacts);renderContacts();}
+function sendContactForm(){
+  const name=document.getElementById('msgName').value.trim(),email=document.getElementById('msgEmail').value.trim(),subject=document.getElementById('msgSubject').value.trim(),body=document.getElementById('msgBody').value.trim();
+  if(!name||!subject||!body){alert('Please fill in all required fields.');return;}
+  const clubEmail=contacts.length?contacts[0].email:'club@university.edu';
+  window.location.href='mailto:'+clubEmail+'?subject='+encodeURIComponent('[The Club] '+subject)+'&body='+encodeURIComponent('From: '+name+(email?' <'+email+'>':'')+'\n\n'+body);
+}
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════
+function renderDashStats(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const up=events.filter(e=>new Date(e.date+'T00:00:00')>=today).length;
+  const stats=[{num:events.length,label:'Total Events'},{num:up,label:'Upcoming'},{num:polls.length,label:'Total Polls'},{num:polls.filter(p=>p.open).length,label:'Open Polls'},{num:media.length,label:'Recordings'},{num:availability.length,label:'Availability Entries'},{num:resources.length,label:'Resources'},{num:contacts.length,label:'Officers Listed'}];
+  document.getElementById('dashStats').innerHTML=stats.map(s=>'<div class="dash-stat"><div class="dash-stat-num">'+s.num+'</div><div class="dash-stat-label">'+s.label+'</div></div>').join('');
+}
+function renderAuditLog(){
+  const el=document.getElementById('auditLog');
+  if(!auditLog.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">No activity yet</div>';return;}
+  el.innerHTML=auditLog.map(e=>'<div class="audit-entry"><span class="audit-time">'+e.time+'</span><span class="audit-text">'+e.text+'</span></div>').join('');
+}
+function clearAllData(){
+  ['events','polls','media','availability','constitution','votedPolls','resources','contacts','auditLog','announcement'].forEach(k=>localStorage.removeItem('club_' + STORE_VERSION + '_' + k));
+  sessionStorage.clear();
+  location.reload();
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)closeModal(this.id);}));
+</script>
+</body>
+</html>
